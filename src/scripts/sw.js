@@ -97,6 +97,7 @@ self.addEventListener("push", (event) => {
     data: {
       dateOfArrival: Date.now(),
       primaryKey: 1,
+      //notification link
       url: '/Dicoding-Story/'
     },
     actions: [
