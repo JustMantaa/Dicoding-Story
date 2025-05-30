@@ -9,7 +9,7 @@ const ENDPOINTS = {
   REGISTER: `${BASE_URL}/register`,
   DETAIL_STORY: (id) => `${BASE_URL}/stories/${id}`,
   SUBSCRIBE: `${BASE_URL}/notifications/subscribe`,
-  UNSUBSCRIBE: `${BASE_URL}/notifications/unsubscribe`,
+  UNSUBSCRIBE: `${BASE_URL}/notifications/subscribe`,
 };
 
 export async function getData() {
@@ -178,23 +178,53 @@ export async function subscribePushNotification({ endpoint, keys: { p256dh, auth
 }
  
 export async function unsubscribePushNotification({ endpoint }) {
-  const accessToken = getAccessToken();
-  const data = JSON.stringify({ endpoint });
- 
-  const fetchResponse = await fetch(ENDPOINTS.UNSUBSCRIBE, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${accessToken}`,
-    },
-    body: data,
-  });
-  const json = await fetchResponse.json();
- 
-  return {
-    ...json,
-    ok: fetchResponse.ok,
-  };
+  try {
+    const accessToken = getAccessToken();
+    if (!accessToken) {
+      console.error('No access token found. User must be logged in to unsubscribe from notifications.');
+      return {
+        ok: false,
+        message: 'User must be logged in to unsubscribe from notifications'
+      };
+    }
+
+    const data = JSON.stringify({ endpoint });
+   
+    console.log('Sending unsubscribe request to:', ENDPOINTS.UNSUBSCRIBE);
+    const fetchResponse = await fetch(ENDPOINTS.UNSUBSCRIBE, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/json'
+      },
+      body: data
+    });
+
+    if (!fetchResponse.ok) {
+      console.error('Server responded with error:', fetchResponse.status, fetchResponse.statusText);
+      const errorText = await fetchResponse.text();
+      console.error('Error details:', errorText);
+      return {
+        ok: false,
+        message: errorText || 'Failed to unsubscribe from push notifications'
+      };
+    }
+
+    const json = await fetchResponse.json();
+    console.log('Server response:', json);
+   
+    return {
+      ...json,
+      ok: true
+    };
+  } catch (error) {
+    console.error('Error in unsubscribePushNotification:', error);
+    return {
+      ok: false,
+      message: error.message || 'Failed to unsubscribe from push notifications'
+    };
+  }
 }
 
 export default {

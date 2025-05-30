@@ -152,29 +152,43 @@ export async function subscribe() {
 export async function unsubscribe() {
   const failureUnsubscribeMessage = 'Failed to unsubscribe from push notifications.';
   const successUnsubscribeMessage = 'Successfully unsubscribed from push notifications.';
+  
   try {
-    const pushSubscription = await getPushSubscription();
+    // Dapatkan registration terlebih dahulu
+    const registration = await ensureServiceWorkerRegistration();
+    if (!registration) {
+      throw new Error('Service Worker registration not found');
+    }
+
+    // Dapatkan subscription
+    const pushSubscription = await registration.pushManager.getSubscription();
     if (!pushSubscription) {
       alert('Tidak bisa memutus langganan push notification karena belum berlangganan sebelumnya.');
-      return;
+      return false;
     }
+
+    // Dapatkan endpoint dan keys
     const { endpoint, keys } = pushSubscription.toJSON();
+    
+    // Kirim request unsubscribe ke server
     const response = await unsubscribePushNotification({ endpoint });
     if (!response.ok) {
-      alert(failureUnsubscribeMessage);
-      console.error('unsubscribe: response:', response);
-      return;
+      console.error('Server unsubscribe response:', response);
+      throw new Error('Server unsubscribe failed');
     }
+
+    // Unsubscribe dari push manager
     const unsubscribed = await pushSubscription.unsubscribe();
     if (!unsubscribed) {
-      alert(failureUnsubscribeMessage);
-      await subscribePushNotification({ endpoint, keys });
-      return;
+      throw new Error('Local unsubscribe failed');
     }
+
     alert(successUnsubscribeMessage);
+    return true;
   } catch (error) {
+    console.error('Unsubscribe error:', error);
     alert(failureUnsubscribeMessage);
-    console.error('unsubscribe: error:', error);
+    return false;
   }
 }
 
@@ -186,32 +200,40 @@ export async function initNotificationButton() {
     return;
   }
 
-  const isSubscribed = await isCurrentPushSubscriptionAvailable();
-  
+  const updateButtonState = async () => {
+    const isSubscribed = await isCurrentPushSubscriptionAvailable();
+    const button = pushNotificationTools.querySelector('.notification-button');
+    
+    if (button) {
+      button.className = `notification-button ${isSubscribed ? 'subscribed' : ''}`;
+      button.innerHTML = `
+        <i class="fas ${isSubscribed ? 'fa-bell' : 'fa-bell-slash'}"></i>
+        ${isSubscribed ? 'Nonactivate Notification' : 'Activate Notification'}
+      `;
+    }
+  };
+
   const button = document.createElement('button');
-  button.className = `notification-button ${isSubscribed ? 'subscribed' : ''}`;
+  button.className = 'notification-button';
   button.innerHTML = `
-    <i class="fas ${isSubscribed ? 'fa-bell' : 'fa-bell-slash'}"></i>
-    ${isSubscribed ? 'Nonactivate Notification' : 'Activate Notification'}
+    <i class="fas fa-bell-slash"></i>
+    Activate Notification
   `;
   
   button.addEventListener('click', async () => {
+    const isSubscribed = await isCurrentPushSubscriptionAvailable();
+    
     if (isSubscribed) {
-      await unsubscribe();
-      button.className = 'notification-button';
-      button.innerHTML = `
-        <i class="fas fa-bell-slash"></i>
-        Activate Notification
-      `;
+      const success = await unsubscribe();
+      if (success) {
+        await updateButtonState();
+      }
     } else {
       await subscribe();
-      button.className = 'notification-button subscribed';
-      button.innerHTML = `
-        <i class="fas fa-bell"></i>
-        Nonactivate Notification
-      `;
+      await updateButtonState();
     }
   });
 
   pushNotificationTools.appendChild(button);
+  await updateButtonState();
 }
