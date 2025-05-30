@@ -1,0 +1,17 @@
+<!doctype html><html lang="id"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="description" content="Aplikasi untuk berbagi cerita"/><meta name="theme-color" content="#000000"/><link rel="shortcut icon" href="favicon.png"/><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer"/><title>Dicoding Story</title><link rel="manifest" href="manifest.json"/><script defer="defer" src="app.bundle.js"></script><link href="app.bdf5810cb05e90a161d4.css" rel="stylesheet"></head><body><a href="#main-content" class="skip-to-content">Langsung ke konten</a><header><div class="main-header container"><a class="brand-name" href="#/">Dicoding Story</a><nav id="navigation-drawer" class="navigation-drawer"><ul id="nav-list" class="nav-list"><li><a href="#/">Beranda</a></li><li id="push-notification-tools" class="push-notification-tools"></li><li><a href="#/bookmark">Bookmark</a></li><li><a href="#/tambah">Tambah Cerita</a></li><li><a href="#/logout" class="logout-button">Log Out</a></li></ul></nav><button id="drawer-button" class="drawer-button" aria-label="Menu">☰</button></div></header><script>if ('serviceWorker' in navigator) {
+        window.addEventListener('load', async () => {
+          try {
+            // First, unregister any existing service workers
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (const registration of registrations) {
+              await registration.unregister();
+            }
+            
+            // Then register the new service worker
+            const registration = await navigator.serviceWorker.register('./sw.bundle.js');
+            console.log('Service Worker registered successfully:', registration.scope);
+          } catch (error) {
+            console.error('Service Worker registration failed:', error);
+          }
+        });
+      }</script><main id="main-content" class="main-content"></main></body></html>
