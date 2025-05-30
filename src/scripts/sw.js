@@ -1,5 +1,5 @@
 const CACHE_NAME = "dicoding-story-v1";
-const BASE_PATH = "";
+const BASE_PATH = "/Dicoding-Story/";
 
 const urlsToCache = [
   `${BASE_PATH}/`,
@@ -25,7 +25,6 @@ self.addEventListener("install", (event) => {
         try {
           await cache.add(url);
         } catch (err) {
-          // Silent fail on cache add
         }
       }
     })()
@@ -98,7 +97,8 @@ self.addEventListener("push", (event) => {
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),
-      primaryKey: 1
+      primaryKey: 1,
+      url: '/'
     },
     actions: [
       {
@@ -120,9 +120,15 @@ self.addEventListener("push", (event) => {
       if (data.title) notificationData.title = data.title;
       if (data.body) notificationData.body = data.body;
       if (data.icon) notificationData.icon = data.icon;
-      if (data.data) notificationData.data = { ...notificationData.data, ...data.data };
+      if (data.data) {
+        const storyId = data.data.storyId || data.data.id;
+        notificationData.data = { 
+          ...notificationData.data, 
+          ...data.data,
+          url: storyId ? `/#/stories/${storyId}` : notificationData.data.url
+        };
+      }
     } catch (error) {
-      // If JSON parsing fails, try to get text
       const text = event.data.text();
       if (text) notificationData.body = text;
     }
@@ -137,8 +143,22 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   if (event.action === 'explore') {
+    const urlToOpen = event.notification.data?.url || '/';
+    
     event.waitUntil(
-      clients.openWindow('/')
+      clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true
+      }).then((clientList) => {
+        for (const client of clientList) {
+          if (client.url === urlToOpen && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
     );
   }
 });
