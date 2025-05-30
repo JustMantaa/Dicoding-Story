@@ -50,7 +50,6 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const serviceWorkerUrl = self.location.href;
 
-  // Bypass requests for the Service Worker script itself
   if (event.request.url === serviceWorkerUrl) {
     return;
   }
@@ -98,7 +97,7 @@ self.addEventListener("push", (event) => {
     data: {
       dateOfArrival: Date.now(),
       primaryKey: 1,
-      url: '/'
+      url: '/Dicoding-Story/'
     },
     actions: [
       {
